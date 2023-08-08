@@ -8,20 +8,51 @@ import (
 	"time"
 )
 
+var outDeviceUrlMap = map[int][2]string{
+	1: {"https://cloudmaster.hisensehitachi.com/data/tdengine/table/did106h_7_0100452c2f257624_0000",
+		"https://cloudmaster.hisensehitachi.com/data/tdengine/table/did104h_7_0100452c2f257624_0000"},
+	2: {"https://cloudmaster.hisensehitachi.com/data/tdengine/table/did106h_7_0100452c2f257624_0001",
+		"https://cloudmaster.hisensehitachi.com/data/tdengine/table/did104h_7_0100452c2f257624_0001"},
+}
+
+var innerDeviceUrlMap = map[int][2]string{
+	1: {"https://cloudmaster.hisensehitachi.com/data/tdengine/table/did102h_9_0100452c2f257624_0001",
+		"https://cloudmaster.hisensehitachi.com/data/tdengine/table/did103h_9_0100452c2f257624_0001"},
+	2: {"https://cloudmaster.hisensehitachi.com/data/tdengine/table/did102h_9_0100452c2f257624_0002",
+		"https://cloudmaster.hisensehitachi.com/data/tdengine/table/did103h_9_0100452c2f257624_0002"},
+	3: {"https://cloudmaster.hisensehitachi.com/data/tdengine/table/did102h_5_0100452c2f257624_0003",
+		"https://cloudmaster.hisensehitachi.com/data/tdengine/table/did103h_5_0100452c2f257624_0003"},
+	4: {"https://cloudmaster.hisensehitachi.com/data/tdengine/table/did102h_9_0100452c2f257624_0004",
+		"https://cloudmaster.hisensehitachi.com/data/tdengine/table/did103h_9_0100452c2f257624_0004"},
+	5: {"https://cloudmaster.hisensehitachi.com/data/tdengine/table/did102h_69_0100452c2f257624_0005",
+		"https://cloudmaster.hisensehitachi.com/data/tdengine/table/did103h_69_0100452c2f257624_0005"},
+	6: {"https://cloudmaster.hisensehitachi.com/data/tdengine/table/did102h_9_0100452c2f257624_0006",
+		"https://cloudmaster.hisensehitachi.com/data/tdengine/table/did103h_9_0100452c2f257624_0006"},
+	7: {"https://cloudmaster.hisensehitachi.com/data/tdengine/table/did102h_9_0100452c2f257624_0007",
+		"https://cloudmaster.hisensehitachi.com/data/tdengine/table/did103h_9_0100452c2f257624_0007"},
+	8: {"https://cloudmaster.hisensehitachi.com/data/tdengine/table/did102h_9_0100452c2f257624_0008",
+		"https://cloudmaster.hisensehitachi.com/data/tdengine/table/did103h_9_0100452c2f257624_0008"},
+	9: {"https://cloudmaster.hisensehitachi.com/data/tdengine/table/did102h_5_0100452c2f257624_0009",
+		"https://cloudmaster.hisensehitachi.com/data/tdengine/table/did103h_5_0100452c2f257624_0009"},
+	10: {"https://cloudmaster.hisensehitachi.com/data/tdengine/table/did102h_9_0100452c2f257624_0010",
+		"https://cloudmaster.hisensehitachi.com/data/tdengine/table/did103h_9_0100452c2f257624_0010"},
+}
+
 func InitDaemon() {
 	// Create a channel for the queue
-	queue := make(chan *api.OutdoorDevice)
+	outdoorQueue := make(chan *api.OutdoorDevice)
+	indoorQueue := make(chan *api.IndoorDevice)
 
 	// Create a wait group to ensure all goroutines finish before exiting the program
 	var wg sync.WaitGroup
 
 	// Start the scheduler to produce data
 	wg.Add(1)
-	go scheduler(&wg, queue)
+	go scheduler(&wg, outdoorQueue, indoorQueue)
 
 	// Start the consumer to handle data in batches
 	wg.Add(1)
-	go consumer(&wg, queue)
+	go consumer(&wg, outdoorQueue, indoorQueue)
 
 	go amqp.HandlerMessage()
 
@@ -29,7 +60,7 @@ func InitDaemon() {
 	wg.Wait()
 }
 
-func scheduler(wg *sync.WaitGroup, queue chan<- *api.OutdoorDevice) {
+func scheduler(wg *sync.WaitGroup, outdoorQueue chan<- *api.OutdoorDevice, indoorQueue chan *api.IndoorDevice) {
 	// Stop the scheduler when the function finishes
 	defer wg.Done()
 
@@ -40,31 +71,52 @@ func scheduler(wg *sync.WaitGroup, queue chan<- *api.OutdoorDevice) {
 	for {
 		select {
 		case <-ticker.C:
+			token := api.GetGlobalToken()
 			// Call Getapi.OutdoorDeviceInfo and store the result in the queue
-			device, err := api.GetOutdoorDeviceInfo("https://cloudmaster.hisensehitachi.com/auth/oauth/token?username=p_dcfyzd_shijingfeng&password=W%2Bx6Ljdj7ZlLz6wDkpju3w%3D%3D&grant_type=client_credentials&scope=server", "c817dcab-915b-4bdc-b226-17e0b4ddd89b")
-			if err != nil {
-				log.Errorf("GetOutdoorDeviceInfo Error: %v", err)
-			} else {
-				select {
-				case queue <- device:
-				default:
-					log.Info("Queue is full. Skipping element.")
+			for deviceId, urlArr := range outDeviceUrlMap {
+				device, err := api.GetOutdoorDeviceInfo(urlArr[0], urlArr[1], token)
+				if err != nil {
+					log.Errorf("GetOutdoorDeviceInfo Error: %v", err)
+				} else {
+					device.DeviceId = deviceId
+					select {
+					case outdoorQueue <- device:
+					default:
+						log.Info("Queue is full. Skipping element.")
+					}
+				}
+			}
+			for deviceId, urlArr := range innerDeviceUrlMap {
+				device, err := api.GetIndoorDeviceInfo(urlArr[0], urlArr[1], token)
+				if err != nil {
+					log.Errorf("GetOutdoorDeviceInfo Error: %v", err)
+				} else {
+					device.DeviceId = deviceId
+					select {
+					case indoorQueue <- device:
+					default:
+						log.Info("Queue is full. Skipping element.")
+					}
 				}
 			}
 		}
 	}
 }
 
-func consumer(wg *sync.WaitGroup, queue <-chan *api.OutdoorDevice) {
+func consumer(wg *sync.WaitGroup, outdoorQueue <-chan *api.OutdoorDevice, indoorQueue <-chan *api.IndoorDevice) {
 	// Stop the consumer when the function finishes
 	defer wg.Done()
 
 	// Create a list to store the elements
-	var deviceList []*api.OutdoorDevice
+	var deviceList []interface{}
 
-	for device := range queue {
-		deviceList = append(deviceList, device)
-
+	for {
+		select {
+		case device := <-outdoorQueue:
+			deviceList = append(deviceList, device)
+		case device := <-indoorQueue:
+			deviceList = append(deviceList, device)
+		}
 		// If the list reaches 30 elements, process it
 		if len(deviceList) == 30 {
 			// Todo

@@ -3,6 +3,7 @@ package app
 import (
 	"flag"
 	"github.com/RaymondCode/simple-demo/amqp"
+	"github.com/RaymondCode/simple-demo/api"
 	"github.com/RaymondCode/simple-demo/daemon"
 	"github.com/RaymondCode/simple-demo/database"
 
@@ -46,6 +47,12 @@ func InitPlatformService() {
 		common.AbnormalExit()
 	}
 
+	// init token
+	err = api.InitToken()
+	if err != nil {
+		log.Errorf("main(): in api.InitToken() error:%s", err.Error())
+		common.AbnormalExit()
+	}
 	// start daemon
 	go daemon.InitDaemon()
 

@@ -2,10 +2,16 @@ package api
 
 import (
 	"encoding/json"
+	"fmt"
 	log "github.com/sirupsen/logrus"
 	"io/ioutil"
 	"net/http"
+	"sync"
+	"time"
 )
+
+var GlobalToken *AccessToken
+var tokenLock sync.RWMutex
 
 type AccessToken struct {
 	AccessToken string `json:"access_token"`
@@ -14,7 +20,42 @@ type AccessToken struct {
 	Scope       string `json:"scope"`
 }
 
-func GetAssessToken() (*AccessToken, error) {
+func GetGlobalToken() string {
+	tokenLock.RLock()
+	defer tokenLock.RUnlock()
+	return GlobalToken.AccessToken
+}
+
+func InitToken() error {
+	err := RefreshToken()
+	if err != nil {
+		return err
+	}
+	ticker := time.NewTicker(time.Minute * 60)
+	go func() {
+		for range ticker.C {
+			err = RefreshToken()
+			if err != nil {
+				log.Error(err)
+			}
+		}
+	}()
+	return nil
+}
+
+func RefreshToken() error {
+	token, err := getAccessToken()
+	if err != nil {
+		return fmt.Errorf("get access token err: %v", err)
+
+	}
+	tokenLock.Lock()
+	GlobalToken = token
+	tokenLock.Unlock()
+	return nil
+}
+
+func getAccessToken() (*AccessToken, error) {
 	url := "https://cloudmaster.hisensehitachi.com/auth/oauth/token?username=p_dcfyzd_shijingfeng&password=W%2Bx6Ljdj7ZlLz6wDkpju3w%3D%3D&grant_type=client_credentials&scope=server"
 	method := "GET"
 
