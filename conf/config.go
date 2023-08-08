@@ -45,7 +45,7 @@ func createSettingMap() {
 func mapTo(section string, v interface{}) {
 	err := cfg.Section(section).MapTo(v)
 	if err != nil {
-		log.Fatalf("Cfg.MapTo RedisSetting err: %v", err.Error())
+		log.Errorf("Cfg.MapTo RedisSetting err: %v", err.Error())
 	}
 }
 func ConfigLoad(env string) error {
@@ -63,7 +63,7 @@ func ConfigLoad(env string) error {
 	}
 
 	if err != nil {
-		log.Fatalf("Setup, fail to parse config file: %v", err.Error())
+		log.Errorf("Setup, fail to parse config file: %v", err.Error())
 		return err
 	}
 

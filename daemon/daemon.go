@@ -23,6 +23,8 @@ func InitDaemon() {
 	wg.Add(1)
 	go consumer(&wg, queue)
 
+	go amqp.HandlerMessage()
+
 	// Wait for all goroutines to finish their jobs
 	wg.Wait()
 }
@@ -39,7 +41,7 @@ func scheduler(wg *sync.WaitGroup, queue chan<- *api.OutdoorDevice) {
 		select {
 		case <-ticker.C:
 			// Call Getapi.OutdoorDeviceInfo and store the result in the queue
-			device, err := api.GetOutdoorDeviceInfo("https://cloudmaster.hisensehitachi.com/auth/oauth/token?username=p_dcfyzd_shijingfeng&password=W%2Bx6Ljdj7ZlLz6wDkpju3w%3D%3D&grant_type=client_credentials&scope=server", "ff85e547-c47e-45fb-a9cf-e165870a8e50")
+			device, err := api.GetOutdoorDeviceInfo("https://cloudmaster.hisensehitachi.com/auth/oauth/token?username=p_dcfyzd_shijingfeng&password=W%2Bx6Ljdj7ZlLz6wDkpju3w%3D%3D&grant_type=client_credentials&scope=server", "c817dcab-915b-4bdc-b226-17e0b4ddd89b")
 			if err != nil {
 				log.Errorf("GetOutdoorDeviceInfo Error: %v", err)
 			} else {

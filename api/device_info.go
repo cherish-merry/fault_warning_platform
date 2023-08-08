@@ -95,7 +95,7 @@ func mergeData(firstPartData, secondPartData string) (*IndoorDevice, error) {
 	myData.Tg1 = int(secondPartMap["data"].(map[string]interface{})["tg1"].(float64))
 	myData.Fd = int(secondPartMap["data"].(map[string]interface{})["fd"].(float64))
 
-	fmt.Println(myData)
+	log.Info(myData)
 
 	return &myData, nil
 }
@@ -117,7 +117,7 @@ func GetOutdoorDeviceInfo(url string, token string) (*OutdoorDevice, error) {
 	// 解析JSON响应到结构体
 	err = json.Unmarshal(body, &response)
 	if err != nil {
-		fmt.Println("Error decoding JSON:", err)
+		log.Errorf("Error decoding JSON: %v", err)
 		return nil, err
 	}
 	return &response.Data, nil

@@ -2,7 +2,6 @@ package api
 
 import (
 	"encoding/json"
-	"fmt"
 	log "github.com/sirupsen/logrus"
 	"io/ioutil"
 	"net/http"
@@ -34,7 +33,7 @@ func GetAssessToken() (*AccessToken, error) {
 	client := &http.Client{}
 	res, err := client.Do(req)
 	if err != nil {
-		fmt.Println("Error sending request:&v", err)
+		log.Errorf("Error sending request: %v", err)
 		return nil, err
 	}
 	defer res.Body.Close()
@@ -46,7 +45,7 @@ func GetAssessToken() (*AccessToken, error) {
 		return nil, err
 	}
 	// 打印响应内容
-	fmt.Println(string(body))
+	log.Info(string(body))
 
 	var response AccessToken
 	err = json.Unmarshal([]byte(string(body)), &response)

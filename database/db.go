@@ -43,17 +43,6 @@ func (c *InstanceConnection) Init() error {
 		return err
 	}
 
-	secondaryDatabase := conf.PrimaryDatabase
-	dsn = secondaryDatabase.User + ":" + secondaryDatabase.Passwd + "@tcp(" + secondaryDatabase.Host + ")/" + secondaryDatabase.Name + "?charset=utf8mb4&parseTime=True&loc=Local"
-	primaryDb, err = gorm.Open(mysql.Open(dsn), &gorm.Config{NamingStrategy: schema.NamingStrategy{
-		TablePrefix:   "t_",
-		SingularTable: true,
-	}})
-	if err != nil {
-		log.Errorf("main(): in ConfigLoad() error:%s", err.Error())
-		return err
-	}
-
 	return nil
 }
 

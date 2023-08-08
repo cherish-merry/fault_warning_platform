@@ -47,7 +47,7 @@ func InitPlatformService() {
 	}
 
 	// start daemon
-	daemon.InitDaemon()
+	go daemon.InitDaemon()
 
 	//init router
 	r := gin.Default()

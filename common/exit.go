@@ -1,14 +1,14 @@
 package common
 
 import (
-	"fmt"
+	log "github.com/sirupsen/logrus"
 	"os"
 	"runtime/debug"
 )
 
 func AbnormalExit() {
 	// 打印程序退出时的堆栈信息
-	fmt.Println(string(debug.Stack()))
+	log.Fatal(string(debug.Stack()))
 	// exit
 	os.Exit(1)
 }
