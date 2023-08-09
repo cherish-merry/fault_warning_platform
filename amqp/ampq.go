@@ -99,7 +99,7 @@ func HandlerMessage() {
 		nil,
 	)
 	if err != nil {
-		log.Info("无法获取消息: %v", err)
+		log.Infof("无法获取消息: %v", err)
 	}
 
 	// 处理收到的消息
@@ -107,7 +107,7 @@ func HandlerMessage() {
 
 	go func() {
 		for msg := range feedbacks {
-			log.Info("收到消息: %s\n", msg.Body)
+			log.Infof("收到消息: %s\n", msg.Body)
 			// 添加处理消息的逻辑
 		}
 	}()

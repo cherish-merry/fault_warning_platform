@@ -3,43 +3,11 @@ package api
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/RaymondCode/simple-demo/models"
 	log "github.com/sirupsen/logrus"
 	"io/ioutil"
 	"net/http"
 )
-
-type OutdoorDevice struct {
-	Pk       uint    `gorm:"primary_key;auto_increment"`       // 自增主键
-	DeviceId int     `json:"device_id" gorm:"device_id"`       // 设备id
-	Pd       float64 `json:"pd" gorm:"pd"`                     // 高压压力测量值
-	Ps       float64 `json:"ps" gorm:"ps"`                     // 低压压力计算值
-	Td1      float64 `json:"td1" gorm:"td1"`                   // 压缩机顶部温度
-	Te1      float64 `json:"te1" gorm:"te1"`                   // 室外换热器液侧温度
-	Ta       float64 `json:"ta" gorm:"ta"`                     // 环境温度
-	Tfin     float64 `json:"tfin1" gorm:"tfin1"`               // 变频散热片温度
-	A12      float64 `json:"inv1a2" gorm:"inv1a2"`             // 压缩机二次侧电流
-	A1       float64 `json:"inv1a1" gorm:"inv1a1"`             // 压缩机一次侧电流
-	OE       float64 `json:"evo1" gorm:"evo1"`                 // 室外电子膨胀阀开度比例
-	H1       float64 `json:"h1" gorm:"h1"`                     // 压缩机运转频率
-	Fo       float64 `json:"fo" gorm:"fo"`                     // 室外风机运转风速等级
-	TdSH     float64 `json:"tdsh" gorm:"tdsh"`                 // 排气温度与饱和冷凝温度差值。TdSH = Td1-Tcond
-	Info1    float64 `json:"tsc" gorm:"tsc"`                   // Te温度与饱和冷凝温度差值。TeSC =Tcond -Te
-	Status   int     `json:"ou_off" gorm:"ou_off"`             // 运行状态
-	Time     string  `json:"up_unix_time" gorm:"up_unix_time"` // 时间戳
-}
-
-type IndoorDevice struct {
-	Pk             uint `gorm:"primary_key;auto_increment"`                      // 自增主键
-	DeviceId       int  `json:"device_id" gorm:"device_id"`                      // 设备id
-	Tl16           int  `gorm:"column:tl16" json:"tl16"`                         // 室内机液管温度
-	Tg1            int  `gorm:"column:tg1" json:"tg1"`                           // 室内机气管温度
-	Ti             int  `gorm:"column:ti" json:"ti"`                             // 室内回风温度
-	BlowingAirTemp int  `gorm:"column:blowing_air_temp" json:"blowing_air_temp"` // 室内出风温度
-	SetTemperature int  `gorm:"column:set_temperature" json:"set_temperature"`   // 设定温度
-	Fd             int  `gorm:"column:fd" json:"fd"`                             // 内机期望压机功率
-	IfRun          int  `gorm:"column:if_run" json:"if_run"`                     // 开机状态
-	Dt             int  `json:"dt" gorm:"dt"`
-}
 
 func getData(url string, token string) ([]byte, error) {
 	method := "GET"
@@ -74,8 +42,8 @@ func getData(url string, token string) ([]byte, error) {
 	return body, nil
 }
 
-func mergeData(firstPartData, secondPartData string) (*IndoorDevice, error) {
-	var myData IndoorDevice
+func mergeData(firstPartData, secondPartData string) (*models.IndoorDevice, error) {
+	var myData models.IndoorDevice
 
 	// Parse first part data
 	var firstPartMap map[string]interface{}
@@ -89,6 +57,7 @@ func mergeData(firstPartData, secondPartData string) (*IndoorDevice, error) {
 	myData.BlowingAirTemp = int(firstPartMap["data"].(map[string]interface{})["blowing_air_temp"].(float64))
 	myData.SetTemperature = int(firstPartMap["data"].(map[string]interface{})["set_temperature"].(float64))
 	myData.IfRun = int(firstPartMap["data"].(map[string]interface{})["if_run"].(float64))
+	myData.Time = firstPartMap["data"].(map[string]interface{})["up_unix_time"].(string)
 
 	// Parse second part data
 	var secondPartMap map[string]interface{}
@@ -107,7 +76,7 @@ func mergeData(firstPartData, secondPartData string) (*IndoorDevice, error) {
 	return &myData, nil
 }
 
-func GetOutdoorDeviceInfo(url1, url2 string, token string) (*OutdoorDevice, error) {
+func GetOutdoorDeviceInfo(url1, url2 string, token string) (*models.OutdoorDevice, error) {
 	// 第一个url获取除status外的其他字段
 	body, err := getData(url1, token)
 	if err != nil {
@@ -117,9 +86,9 @@ func GetOutdoorDeviceInfo(url1, url2 string, token string) (*OutdoorDevice, erro
 
 	// 定义一个匿名结构体，仅包含data字段
 	var response struct {
-		Code int           `json:"code"`
-		Msg  string        `json:"msg"`
-		Data OutdoorDevice `json:"data"`
+		Code int                  `json:"code"`
+		Msg  string               `json:"msg"`
+		Data models.OutdoorDevice `json:"data"`
 	}
 
 	// 解析JSON响应到结构体
@@ -144,7 +113,7 @@ func GetOutdoorDeviceInfo(url1, url2 string, token string) (*OutdoorDevice, erro
 	return &response.Data, nil
 }
 
-func GetIndoorDeviceInfo(url1 string, url2 string, token string) (*IndoorDevice, error) {
+func GetIndoorDeviceInfo(url1 string, url2 string, token string) (*models.IndoorDevice, error) {
 	part1, err := getData(url1, token)
 	if err != nil {
 		log.Errorf("Get Data err: %v:", err)

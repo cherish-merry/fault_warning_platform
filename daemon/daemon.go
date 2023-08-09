@@ -3,6 +3,8 @@ package daemon
 import (
 	"github.com/RaymondCode/simple-demo/amqp"
 	"github.com/RaymondCode/simple-demo/api"
+	"github.com/RaymondCode/simple-demo/database"
+	"github.com/RaymondCode/simple-demo/models"
 	log "github.com/sirupsen/logrus"
 	"sync"
 	"time"
@@ -40,8 +42,8 @@ var innerDeviceUrlMap = map[int][2]string{
 
 func InitDaemon() {
 	// Create a channel for the queue
-	outdoorQueue := make(chan *api.OutdoorDevice)
-	indoorQueue := make(chan *api.IndoorDevice)
+	outdoorQueue := make(chan *models.OutdoorDevice)
+	indoorQueue := make(chan *models.IndoorDevice)
 
 	// Create a wait group to ensure all goroutines finish before exiting the program
 	var wg sync.WaitGroup
@@ -60,13 +62,13 @@ func InitDaemon() {
 	wg.Wait()
 }
 
-func scheduler(wg *sync.WaitGroup, outdoorQueue chan<- *api.OutdoorDevice, indoorQueue chan *api.IndoorDevice) {
+func scheduler(wg *sync.WaitGroup, outdoorQueue chan<- *models.OutdoorDevice, indoorQueue chan *models.IndoorDevice) {
 	// Stop the scheduler when the function finishes
 	defer wg.Done()
 
 	// Create a ticker with 1-second interval
 	ticker := time.NewTicker(1 * time.Second)
-
+	db := database.GetInstanceConnection().GetPrimaryDB()
 	// Run the scheduler until it's stopped
 	for {
 		select {
@@ -79,6 +81,12 @@ func scheduler(wg *sync.WaitGroup, outdoorQueue chan<- *api.OutdoorDevice, indoo
 					log.Errorf("GetOutdoorDeviceInfo Error: %v", err)
 				} else {
 					device.DeviceId = deviceId
+					unixTime, _ := time.Parse("2006-01-02 15:04:05", device.Time)
+					device.TimeStamp = unixTime.Unix()
+					err = device.Create(db)
+					if err != nil {
+						log.Errorf("create outdoor device Error: %v", err)
+					}
 					select {
 					case outdoorQueue <- device:
 					default:
@@ -92,6 +100,13 @@ func scheduler(wg *sync.WaitGroup, outdoorQueue chan<- *api.OutdoorDevice, indoo
 					log.Errorf("GetOutdoorDeviceInfo Error: %v", err)
 				} else {
 					device.DeviceId = deviceId
+					unixTime, _ := time.Parse("2006-01-02 15:04:05", device.Time)
+					device.TimeStamp = unixTime.Unix()
+					device.Dt = device.Tg1 - device.Tl16
+					err = device.Create(db)
+					if err != nil {
+						log.Errorf("create indoor device Error: %v", err)
+					}
 					select {
 					case indoorQueue <- device:
 					default:
@@ -103,7 +118,7 @@ func scheduler(wg *sync.WaitGroup, outdoorQueue chan<- *api.OutdoorDevice, indoo
 	}
 }
 
-func consumer(wg *sync.WaitGroup, outdoorQueue <-chan *api.OutdoorDevice, indoorQueue <-chan *api.IndoorDevice) {
+func consumer(wg *sync.WaitGroup, outdoorQueue <-chan *models.OutdoorDevice, indoorQueue <-chan *models.IndoorDevice) {
 	// Stop the consumer when the function finishes
 	defer wg.Done()
 
