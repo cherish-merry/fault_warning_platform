@@ -4,6 +4,7 @@ import (
 	"flag"
 	"github.com/RaymondCode/simple-demo/amqp"
 	"github.com/RaymondCode/simple-demo/api"
+	"github.com/RaymondCode/simple-demo/daemon"
 	"github.com/RaymondCode/simple-demo/database"
 
 	"github.com/RaymondCode/simple-demo/common"
@@ -53,7 +54,7 @@ func InitPlatformService() {
 		common.AbnormalExit()
 	}
 	// start daemon
-	//go daemon.InitDaemon()
+	go daemon.InitDaemon()
 
 	//init router
 	r := gin.Default()

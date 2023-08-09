@@ -3,6 +3,7 @@ package daemon
 import (
 	"github.com/RaymondCode/simple-demo/amqp"
 	"github.com/RaymondCode/simple-demo/api"
+	"github.com/RaymondCode/simple-demo/conf"
 	"github.com/RaymondCode/simple-demo/database"
 	"github.com/RaymondCode/simple-demo/models"
 	log "github.com/sirupsen/logrus"
@@ -66,8 +67,10 @@ func scheduler(wg *sync.WaitGroup, outdoorQueue chan<- *models.OutdoorDevice, in
 	// Stop the scheduler when the function finishes
 	defer wg.Done()
 
+	config := conf.OthersConfig
 	// Create a ticker with 1-second interval
-	ticker := time.NewTicker(1 * time.Second)
+	log.Infof("collect interval: %vs", config.CollectInterval)
+	ticker := time.NewTicker(time.Duration(config.CollectInterval) * time.Second)
 	db := database.GetInstanceConnection().GetPrimaryDB()
 	// Run the scheduler until it's stopped
 	for {
@@ -141,10 +144,5 @@ func consumer(wg *sync.WaitGroup, outdoorQueue <-chan *models.OutdoorDevice, ind
 			// Clear the list for the next batch
 			deviceList = nil
 		}
-	}
-
-	// Process the remaining elements (if any)
-	if len(deviceList) > 0 {
-		log.Info("Received final batch of elements:", deviceList)
 	}
 }

@@ -24,6 +24,10 @@ type Server struct {
 	Port string
 }
 
+type Others struct {
+	CollectInterval int
+}
+
 var PrimaryDatabase = &Database{}
 
 var SecondaryDatabase = &Database{}
@@ -32,6 +36,8 @@ var ServerConfig = &Server{}
 
 var AmqpConfig = &Amqp{}
 
+var OthersConfig = &Others{}
+
 var cfg *ini.File
 
 func createSettingMap() {
@@ -39,6 +45,7 @@ func createSettingMap() {
 	mapTo("secondary-database", SecondaryDatabase)
 	mapTo("server", ServerConfig)
 	mapTo("amqp", AmqpConfig)
+	mapTo("others", OthersConfig)
 }
 
 // mapTo map section
