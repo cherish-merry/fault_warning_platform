@@ -5,6 +5,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/RaymondCode/simple-demo/conf"
+	"github.com/RaymondCode/simple-demo/database"
+	"github.com/RaymondCode/simple-demo/models"
 	log "github.com/sirupsen/logrus"
 	"time"
 
@@ -107,7 +109,18 @@ func HandlerMessage() {
 
 	go func() {
 		for msg := range feedbacks {
-			log.Infof("收到消息: %s\n", msg.Body)
+			feedback := models.Feedback{}
+			err := json.Unmarshal(msg.Body, &feedback)
+			if err != nil {
+				log.Errorf("Unmarshal feedback fail: %v", err)
+			}
+			db := database.GetInstanceConnection().GetPrimaryDB()
+			log.Infof("收到消息: %v\n", feedback)
+			err = feedback.Create(db)
+			if err != nil {
+				log.Errorf("Create feedback fail: %v", err)
+			}
+
 			// 添加处理消息的逻辑
 		}
 	}()

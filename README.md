@@ -1,21 +1,15 @@
 # 项目名称
 空调项目
 
-## 模块规划
-1. cmd：二进制程序编译入口
-2. common: 基础公共组件
-3. conf：配置文件存储目录
-4. constant：常量定义
-5. database：数据库相关
-6. ~~duplicated: 待废弃~~
-7. router: 路由层
-8. service: 业务逻辑层
-9. models：数据访问层
-10. util: 工具类
+## 主要文件夹含义
+1. cmd 二进制程序编译入口
+3. conf 配置文件存储目录
+4. daemon 调用第三方接口、模型端交互
+4. router 前端交互
 
 ## 编译方式
 ```
-go build -o main ./cmd/mian
+GOARCH=amd64 GOOS=linux go build -o main ./cmd
 ```
 
 ## 文档相关

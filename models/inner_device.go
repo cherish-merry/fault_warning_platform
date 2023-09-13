@@ -13,8 +13,8 @@ type IndoorDevice struct {
 	Fd             int    `gorm:"column:fd" json:"fd"`                             // 内机期望压机功率
 	IfRun          int    `gorm:"column:if_run" json:"if_run"`                     // 开机状态
 	Dt             int    `json:"dt" gorm:"column:dt"`
-	Time           string `json:"up_unix_time,omitempty" gorm:"-"` // 时间戳
-	TimeStamp      int64  `json:"time" gorm:"column:up_unix_time"` // 时间戳
+	Time           string `json:"up_unix_time,omitempty" gorm:"time"` // 时间戳
+	TimeStamp      int64  `json:"time" gorm:"column:up_unix_time"`    // 时间戳
 }
 
 func (i *IndoorDevice) Create(db *gorm.DB) error {

@@ -6,6 +6,7 @@ import (
 	"github.com/RaymondCode/simple-demo/api"
 	"github.com/RaymondCode/simple-demo/daemon"
 	"github.com/RaymondCode/simple-demo/database"
+	"os"
 
 	"github.com/RaymondCode/simple-demo/common"
 	"github.com/RaymondCode/simple-demo/conf"
@@ -55,6 +56,15 @@ func InitPlatformService() {
 	}
 	// start daemon
 	go daemon.InitDaemon()
+
+	config := conf.OthersConfig
+
+	// 检查文件夹是否存在
+	if _, err := os.Stat(config.UploadDir); os.IsNotExist(err) {
+		// 文件夹不存在，创建它
+		log.Infof("create file dir")
+		_ = os.MkdirAll(config.UploadDir, os.ModePerm)
+	}
 
 	//init router
 	r := gin.Default()

@@ -85,8 +85,6 @@ func getAccessToken() (*AccessToken, error) {
 		log.Errorf("Error reading response: %v", err)
 		return nil, err
 	}
-	// 打印响应内容
-	log.Info(string(body))
 
 	var response AccessToken
 	err = json.Unmarshal([]byte(string(body)), &response)

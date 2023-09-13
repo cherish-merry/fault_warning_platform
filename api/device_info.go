@@ -18,7 +18,6 @@ func getData(url string, token string) ([]byte, error) {
 		log.Errorf("Error creating request: %v", err)
 		return nil, err
 	}
-	log.Info(url)
 	// 设置请求头
 	req.Header.Add("Authorization", "bearer "+token)
 
@@ -37,7 +36,6 @@ func getData(url string, token string) ([]byte, error) {
 		log.Errorf("Error reading response: %v", err)
 		return nil, err
 	}
-	//log.Info(string(body))
 
 	return body, nil
 }
@@ -70,9 +68,6 @@ func mergeData(firstPartData, secondPartData string) (*models.IndoorDevice, erro
 	myData.Tl16 = int(secondPartMap["data"].(map[string]interface{})["tl16"].(float64))
 	myData.Tg1 = int(secondPartMap["data"].(map[string]interface{})["tg1"].(float64))
 	myData.Fd = int(secondPartMap["data"].(map[string]interface{})["fd"].(float64))
-
-	log.Info(myData)
-
 	return &myData, nil
 }
 
@@ -109,7 +104,7 @@ func GetOutdoorDeviceInfo(url1, url2 string, token string) (*models.OutdoorDevic
 	if err != nil {
 		return nil, fmt.Errorf("error parsing status info: %v", err)
 	}
-	response.Data.Status = int(dataMap["data"].(map[string]interface{})["ou_off"].(float64))
+	response.Data.Status = dataMap["data"].(map[string]interface{})["ou_off"].(float64)
 	return &response.Data, nil
 }
 

@@ -19,7 +19,7 @@ type OutdoorDevice struct {
 	TdSH      float64 `json:"tdsh" gorm:"column:tdsh"`             // 排气温度与饱和冷凝温度差值。TdSH = Td1-Tcond
 	Info1     float64 `json:"tsc" gorm:"column:tsc"`               // Te温度与饱和冷凝温度差值。TeSC =Tcond -Te
 	Status    float64 `json:"ou_off" gorm:"column:ou_off"`         // 运行状态
-	Time      string  `json:"up_unix_time,omitempty" gorm:"-"`     // 时间字符串
+	Time      string  `json:"up_unix_time,omitempty" gorm:"time"`  // 时间字符串
 	TimeStamp int64   `json:"time" gorm:"column:up_unix_time"`     // 时间戳
 }
 

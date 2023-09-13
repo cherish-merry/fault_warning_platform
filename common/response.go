@@ -44,6 +44,11 @@ func (g *Gin) ResponseFail() {
 	return
 }
 
+func (g *Gin) ResponseNormal(data interface{}) {
+	g.C.JSON(http.StatusOK, data)
+	return
+}
+
 func (g *Gin) ResponseSuccess(data interface{}) {
 	if data != nil {
 		g.C.JSON(http.StatusOK, gin.H{
