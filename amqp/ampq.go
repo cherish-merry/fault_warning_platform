@@ -18,6 +18,8 @@ var (
 	ch    *amqp.Channel
 	go2py = "go2py"
 	py2go = "py2go"
+
+	upd = "upd"
 )
 
 func InitAmqp() error {
@@ -45,6 +47,16 @@ func InitAmqp() error {
 		false, // 是否阻塞等待
 		nil,   // 额外参数
 	)
+
+	_, err = ch.QueueDeclare(
+		upd,   // 队列名称
+		false, // 是否持久化
+		false, // 是否自动删除
+		false, // 是否独占模式
+		false, // 是否阻塞等待
+		nil,   // 额外参数
+	)
+
 	if err != nil {
 		log.Errorf("Failed to declare a queue: %v", err)
 		return err
@@ -127,4 +139,28 @@ func HandlerMessage() {
 
 	log.Info("等待消息。按 Ctrl+C 退出")
 	<-forever
+}
+
+func UpdateConfig(updParams []string) {
+	// 序列化结构体为JSON
+	jsonData, err := json.Marshal(updParams)
+	if err != nil {
+		log.Errorf("Failed to marshal struct to JSON: %v", err)
+	}
+
+	// 发布消息到队列
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	err = ch.PublishWithContext(
+		ctx,
+		"",    // 交换器名称，使用默认交换器
+		upd,   // 队列名称
+		false, // 是否立即发送消息
+		false, // 是否等待服务器确认
+		amqp.Publishing{
+			ContentType: "application/json",
+			Body:        jsonData,
+		},
+	)
 }

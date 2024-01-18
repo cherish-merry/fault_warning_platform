@@ -25,11 +25,14 @@ type Server struct {
 }
 
 type Others struct {
-	CollectInterval int
-	Filter          bool
-	UploadDir       string
-	SystemModel     string
-	IuModel         string
+	CollectInterval    int
+	Filter             bool
+	UploadDir          string
+	SystemModel        string
+	IuModel            string
+	SkipPoint          int
+	DeviationThreshold float64
+	SlideWindow        int
 }
 
 var PrimaryDatabase = &Database{}

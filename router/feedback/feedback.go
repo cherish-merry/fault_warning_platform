@@ -76,3 +76,23 @@ func GetLatestFeedBack(ctx *gin.Context) {
 	}
 	g.ResponseNormal(ans)
 }
+
+func GetFeedBackByDay(ctx *gin.Context) {
+	g := common.GetGin(ctx)
+	param := getFeedbackDeviceParam{}
+	err := ctx.ShouldBindQuery(&param)
+	if err != nil {
+		log.Errorf("get param fail, err:%v", err)
+		g.ResponseFail()
+		return
+	}
+	feedback := models.Feedback{}
+	db := database.GetInstanceConnection().GetPrimaryDB()
+	days, err := feedback.GetDayFeedback(db, param.StartTime, param.EndTime)
+	if err != nil {
+		log.Errorf("get indoor device info fail, err:%v", err)
+		g.ResponseFail()
+		return
+	}
+	g.ResponseNormal(days)
+}

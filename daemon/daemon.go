@@ -74,6 +74,12 @@ func InitDaemon() {
 	wg.Wait()
 }
 
+/*
+1、获取企业数据 api.GetOutdoorDeviceInfo(urlArr[0], urlArr[1], token) api.GetIndoorDeviceInfo(urlArr[0], urlArr[1], token)
+2、构建数据 func buildMessage(messageChan chan string)
+2.1、过滤数据 func filter(pd float64) bool {}
+3、三十条数据发送到模型端 func consumer(wg *sync.WaitGroup, messageChan chan string) {}
+*/
 func scheduler(wg *sync.WaitGroup, messageChan chan string) {
 	// Stop the scheduler when the function finishes
 	defer wg.Done()
@@ -111,7 +117,9 @@ func scheduler(wg *sync.WaitGroup, messageChan chan string) {
 						}
 					}
 					outdoorLock.Lock()
-					outDoorDeviceList = append(outDoorDeviceList, device)
+					if device != nil {
+						outDoorDeviceList = append(outDoorDeviceList, device)
+					}
 					outdoorLock.Unlock()
 				}()
 			}
@@ -134,7 +142,9 @@ func scheduler(wg *sync.WaitGroup, messageChan chan string) {
 						}
 					}
 					indoorLock.Lock()
-					inDoorDeviceList = append(inDoorDeviceList, device)
+					if device != nil {
+						inDoorDeviceList = append(inDoorDeviceList, device)
+					}
 					indoorLock.Unlock()
 				}()
 			}
@@ -212,7 +222,7 @@ func filter(pd float64) bool {
 		return true
 	} else {
 		point++
-		if point > 24 {
+		if point > conf.OthersConfig.SkipPoint {
 			return false
 		}
 		return true
@@ -244,8 +254,10 @@ func calculateStandardDeviation(data []float64) float64 {
 }
 
 func consumer(wg *sync.WaitGroup, messageChan chan string) {
+	config := conf.OthersConfig
+
 	// Stop the consumer when the function finishes
-	batchSize := 30
+	batchSize := config.SlideWindow
 
 	defer wg.Done()
 
@@ -259,8 +271,7 @@ func consumer(wg *sync.WaitGroup, messageChan chan string) {
 		//log.Infof("message queue size: %d", len(messageList))
 		// If the list reaches 30 elements, process it
 		if len(messageList) == batchSize {
-			config := conf.OthersConfig
-			if !config.Filter || calculateStandardDeviation(standardDeviation) <= 0.8 {
+			if !config.Filter || calculateStandardDeviation(standardDeviation) <= config.DeviationThreshold {
 				amqp.SendMessage(messageList)
 			}
 			messageList = nil

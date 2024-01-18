@@ -1,6 +1,7 @@
 package router
 
 import (
+	"github.com/RaymondCode/simple-demo/router/config"
 	"github.com/RaymondCode/simple-demo/router/feedback"
 	"github.com/RaymondCode/simple-demo/router/file"
 	"github.com/RaymondCode/simple-demo/router/indoor"
@@ -16,6 +17,9 @@ func InitRouter(r *gin.Engine) {
 	apiRouter.GET("/outdoor/get", outdoor.GetOutdoorDevice)
 	apiRouter.GET("/feedback/get", feedback.GetFeedback)
 	apiRouter.GET("/feedback/latest", feedback.GetLatestFeedBack)
+	apiRouter.GET("/feedback/day", feedback.GetFeedBackByDay)
 	apiRouter.POST("/upload", file.Upload)
 	apiRouter.GET("/download", file.Download)
+	apiRouter.POST("/config/preprocessing", config.UpdatePreprocessing)
+	apiRouter.POST("/config/warnParams", config.UpdateWarnParams)
 }

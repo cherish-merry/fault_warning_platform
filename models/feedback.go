@@ -39,3 +39,12 @@ func (i *Feedback) GetLatestFeedback(db *gorm.DB, resultType string, result stri
 	err = db.Where(resultType+" <> ?", result).Order("pk DESC").Offset(page * limit).Limit(limit).Find(&res).Error
 	return
 }
+
+func (i *Feedback) GetDayFeedback(db *gorm.DB, startTime, endTime int64) (d []string, err error) {
+	var dates []string
+	db.Model(&Feedback{}).
+		Where("systemResult <> ? AND startTime >= ? AND endTime <= ?", "Normal", startTime, endTime).
+		Select("DISTINCT DATE_FORMAT(startTimeStr, '%Y-%m-%d')").
+		Scan(&dates)
+	return dates, nil
+}

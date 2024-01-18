@@ -2,6 +2,7 @@ package api
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"github.com/RaymondCode/simple-demo/models"
 	log "github.com/sirupsen/logrus"
@@ -51,11 +52,17 @@ func mergeData(firstPartData, secondPartData string) (*models.IndoorDevice, erro
 	}
 
 	// Extract desired fields from first part data
-	myData.Ti = int(firstPartMap["data"].(map[string]interface{})["ti"].(float64))
-	myData.BlowingAirTemp = int(firstPartMap["data"].(map[string]interface{})["blowing_air_temp"].(float64))
-	myData.SetTemperature = int(firstPartMap["data"].(map[string]interface{})["set_temperature"].(float64))
-	myData.IfRun = int(firstPartMap["data"].(map[string]interface{})["if_run"].(float64))
-	myData.Time = firstPartMap["data"].(map[string]interface{})["up_unix_time"].(string)
+	data := firstPartMap["data"]
+	if data == nil || len(data.(map[string]interface{})) == 0 {
+		log.Errorf("mergeData err,part1 data is nil")
+		return nil, errors.New("mergeData err,part1 data is nil")
+	}
+
+	myData.Ti = int(data.(map[string]interface{})["ti"].(float64))
+	myData.BlowingAirTemp = int(data.(map[string]interface{})["blowing_air_temp"].(float64))
+	myData.SetTemperature = int(data.(map[string]interface{})["set_temperature"].(float64))
+	myData.IfRun = int(data.(map[string]interface{})["if_run"].(float64))
+	myData.Time = data.(map[string]interface{})["up_unix_time"].(string)
 
 	// Parse second part data
 	var secondPartMap map[string]interface{}
@@ -64,10 +71,15 @@ func mergeData(firstPartData, secondPartData string) (*models.IndoorDevice, erro
 		return &myData, fmt.Errorf("error parsing second part data: %v", err)
 	}
 
+	data = secondPartMap["data"]
+	if data == nil || len(data.(map[string]interface{})) == 0 {
+		log.Errorf("mergeData err,part2 data is nil")
+		return nil, errors.New("mergeData err,part2 data is nil")
+	}
 	// Extract desired fields from second part data
-	myData.Tl16 = int(secondPartMap["data"].(map[string]interface{})["tl16"].(float64))
-	myData.Tg1 = int(secondPartMap["data"].(map[string]interface{})["tg1"].(float64))
-	myData.Fd = int(secondPartMap["data"].(map[string]interface{})["fd"].(float64))
+	myData.Tl16 = int(data.(map[string]interface{})["tl16"].(float64))
+	myData.Tg1 = int(data.(map[string]interface{})["tg1"].(float64))
+	myData.Fd = int(data.(map[string]interface{})["fd"].(float64))
 	return &myData, nil
 }
 
@@ -104,6 +116,10 @@ func GetOutdoorDeviceInfo(url1, url2 string, token string) (*models.OutdoorDevic
 	if err != nil {
 		return nil, fmt.Errorf("error parsing status info: %v", err)
 	}
+	if dataMap["data"] == nil {
+		log.Errorf("getData err, data is nil")
+		return nil, errors.New("getData err, data is nil")
+	}
 	response.Data.Status = dataMap["data"].(map[string]interface{})["ou_off"].(float64)
 	return &response.Data, nil
 }
@@ -119,6 +135,12 @@ func GetIndoorDeviceInfo(url1 string, url2 string, token string) (*models.Indoor
 		log.Errorf("Get Data err: %v:", err)
 		return nil, err
 	}
+
+	if len(part1) == 0 || len(part2) == 0 {
+		log.Errorf("MergeData err: %v:", err)
+		return nil, err
+	}
+
 	data, err := mergeData(string(part1), string(part2))
 	if err != nil {
 		log.Errorf("MergeData err: %v:", err)
